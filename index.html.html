@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EMDR Therapie</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap');
+
+  :root {
+    --bg: #0a0e14;
+    --surface: #111620;
+    --border: #1e2736;
+    --text: #c8d4e8;
+    --text-dim: #4a5a72;
+    --accent: #4a9eff;
+    --accent-glow: rgba(74, 158, 255, 0.25);
+    --dot-color: #4a9eff;
+    --dot-glow: rgba(74, 158, 255, 0.6);
+    --success: #3dd68c;
+    --track-h: 4px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .logo {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .session-status {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+  .session-status.active { color: var(--success); }
+
+  /* ── MAIN STAGE ── */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 20px;
+    gap: 32px;
+  }
+
+  /* track line */
+  .track-container {
+    width: min(820px, 92vw);
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .track {
+    width: 100%;
+    height: var(--track-h);
+    background: var(--border);
+    border-radius: 2px;
+    position: relative;
+    overflow: visible;
+  }
+  .track-glow {
+    position: absolute;
+    inset: 0;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  body.running .track-glow { opacity: 1; }
+
+  /* dot */
+  .dot-wrapper {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--dot-color);
+    box-shadow: 0 0 0 0 var(--dot-glow);
+    transition: background 0.3s;
+  }
+  body.running .dot {
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 8px 2px var(--dot-glow); }
+    50%       { box-shadow: 0 0 24px 8px var(--dot-glow); }
+  }
+
+  /* counter */
+  .counter-display {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    min-width: 80px;
+    text-align: center;
+  }
+  .counter-num {
+    font-size: 28px;
+    color: var(--text);
+    display: block;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+
+  /* ── CONTROLS ── */
+  .controls {
+    width: min(820px, 92vw);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    align-items: end;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .control-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  /* slider */
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+  .slider-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    min-width: 30px;
+    text-align: right;
+  }
+
+  /* color picker row */
+  .color-row {
+    display: flex;
+    gap: 8px;
+  }
+  .color-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+  .color-btn:hover { transform: scale(1.15); }
+  .color-btn.active { border-color: white; }
+
+  /* set counter row */
+  .set-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .set-btn {
+    background: var(--border);
+    border: none;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .set-btn:hover { background: #2a3548; }
+  .set-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--text);
+    min-width: 24px;
+    text-align: center;
+  }
+
+  /* ── MAIN BUTTON ── */
+  .btn-main {
+    width: min(820px, 92vw);
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    text-transform: uppercase;
+  }
+  .btn-main:hover {
+    background: #182030;
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  body.running .btn-main {
+    border-color: #c04040;
+    color: #e05050;
+  }
+  body.running .btn-main:hover { background: #1a0f0f; }
+
+  /* ── SET PROGRESS ── */
+  .set-progress {
+    width: min(820px, 92vw);
+    display: flex;
+    gap: 6px;
+  }
+  .set-pip {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+  .set-pip.done { background: var(--success); }
+  .set-pip.active { background: var(--accent); }
+
+  /* ── SOUND TOGGLE ── */
+  .sound-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-track {
+    width: 34px; height: 18px;
+    border-radius: 9px;
+    background: var(--border);
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-track.on { background: var(--accent); }
+  .toggle-thumb {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: white;
+    transition: left 0.2s;
+  }
+  .toggle-track.on .toggle-thumb { left: 18px; }
+  .toggle-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 12px 28px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .footer-note {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+  }
+  .vr-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 3px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">EMDR · Stimulus</div>
+  <div class="session-status" id="statusLabel">BEREIT</div>
+</header>
+
+<main>
+
+  <!-- Set-Progress-Pips (werden dynamisch befüllt) -->
+  <div class="set-progress" id="setPips"></div>
+
+  <!-- Track + Dot -->
+  <div class="track-container">
+    <div class="track">
+      <div class="track-glow"></div>
+      <div class="dot-wrapper" id="dotWrapper">
+        <div class="dot" id="dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zähler -->
+  <div class="counter-display">
+    <span class="counter-num" id="cycleCount">0</span>
+    <span>Durchläufe</span>
+  </div>
+
+  <!-- Steuerung -->
+  <div class="controls">
+
+    <!-- Geschwindigkeit -->
+    <div class="control-group">
+      <span class="control-label">Geschwindigkeit</span>
+      <div class="slider-row">
+        <input type="range" id="speedSlider" min="0.5" max="4" step="0.1" value="1.2">
+        <span class="slider-val" id="speedVal">1.2 s</span>
+      </div>
+    </div>
+
+    <!-- Farbe -->
+    <div class="control-group">
+      <span class="control-label">Stimulus-Farbe</span>
+      <div class="color-row" id="colorRow">
+        <div class="color-btn active" data-color="#4a9eff" style="background:#4a9eff"></div>
+        <div class="color-btn" data-color="#3dd68c" style="background:#3dd68c"></div>
+        <div class="color-btn" data-color="#f0c040" style="background:#f0c040"></div>
+        <div class="color-btn" data-color="#e05050" style="background:#e05050"></div>
+        <div class="color-btn" data-color="#cc88ff" style="background:#cc88ff"></div>
+        <div class="color-btn" data-color="#ffffff" style="background:#ffffff"></div>
+      </div>
+    </div>
+
+    <!-- Sets -->
+    <div class="control-group">
+      <span class="control-label">Sets</span>
+      <div class="set-row">
+        <button class="set-btn" id="setMinus">−</button>
+        <span class="set-val" id="setVal">3</span>
+        <button class="set-btn" id="setPlus">+</button>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-left:4px;">× 24</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sound Toggle -->
+  <div class="sound-toggle" id="soundToggle">
+    <div class="toggle-track" id="toggleTrack">
+      <div class="toggle-thumb"></div>
+    </div>
+    <span class="toggle-label">Bilateraler Sound</span>
+  </div>
+
+  <!-- Start/Stop -->
+  <button class="btn-main" id="mainBtn">Session starten</button>
+
+</main>
+
+<footer>
+  <span class="footer-note">Nur zur Verwendung durch ausgebildete Therapeuten</span>
+  <span class="vr-badge">WebXR ready</span>
+</footer>
+
+<script>
+// ── STATE ──
+let running   = false;
+let speed     = 1.2;      // Sekunden pro Durchlauf
+let sets      = 3;
+let repsPerSet= 24;
+let currentSet= 0;
+let repCount  = 0;
+let totalReps = 0;
+let direction = 1;        // 1 = rechts, -1 = links
+let dotPos    = 0;        // 0..1
+let lastTime  = null;
+let rafId     = null;
+let soundOn   = false;
+let audioCtx  = null;
+
+// ── ELEMENTS ──
+const dotWrapper  = document.getElementById('dotWrapper');
+const cycleCount  = document.getElementById('cycleCount');
+const speedSlider = document.getElementById('speedSlider');
+const speedVal    = document.getElementById('speedVal');
+const setValEl    = document.getElementById('setVal');
+const mainBtn     = document.getElementById('mainBtn');
+const statusLabel = document.getElementById('statusLabel');
+const setPips     = document.getElementById('setPips');
+const toggleTrack = document.getElementById('toggleTrack');
+const dot         = document.getElementById('dot');
+
+// ── INIT PIPS ──
+function buildPips() {
+  setPips.innerHTML = '';
+  for (let i = 0; i < sets; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'set-pip';
+    pip.id = 'pip-' + i;
+    setPips.appendChild(pip);
+  }
+}
+buildPips();
+
+// ── SPEED SLIDER ──
+speedSlider.addEventListener('input', () => {
+  speed = parseFloat(speedSlider.value);
+  speedVal.textContent = speed.toFixed(1) + ' s';
+});
+
+// ── SETS ──
+document.getElementById('setMinus').addEventListener('click', () => {
+  if (sets > 1) { sets--; setValEl.textContent = sets; buildPips(); }
+});
+document.getElementById('setPlus').addEventListener('click', () => {
+  if (sets < 10) { sets++; setValEl.textContent = sets; buildPips(); }
+});
+
+// ── COLOR ──
+document.getElementById('colorRow').addEventListener('click', e => {
+  const btn = e.target.closest('.color-btn');
+  if (!btn) return;
+  document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const c = btn.dataset.color;
+  document.documentElement.style.setProperty('--dot-color', c);
+  // glow aus Farbe ableiten
+  document.documentElement.style.setProperty('--dot-glow', c + '99');
+  document.documentElement.style.setProperty('--accent-glow', c + '33');
+});
+
+// ── SOUND TOGGLE ──
+document.getElementById('soundToggle').addEventListener('click', () => {
+  soundOn = !soundOn;
+  toggleTrack.classList.toggle('on', soundOn);
+  if (soundOn && !audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+});
+
+function playTick(side) {
+  if (!soundOn || !audioCtx) return;
+  const osc  = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  const pan  = audioCtx.createStereoPanner();
+  pan.pan.value = side === 'left' ? -1 : 1;
+  osc.frequency.value = 440;
+  osc.type = 'sine';
+  gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+  osc.connect(gain);
+  gain.connect(pan);
+  pan.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.12);
+}
+
+// ── ANIMATION ──
+function updateDot(progress) {
+  const trackW = dotWrapper.parentElement.clientWidth;
+  const x = progress * trackW;
+  dotWrapper.style.left = x + 'px';
+}
+
+function tick(ts) {
+  if (!lastTime) lastTime = ts;
+  const delta = (ts - lastTime) / 1000;
+  lastTime = ts;
+
+  dotPos += direction * (delta / speed);
+
+  if (dotPos >= 1) {
+    dotPos = 1;
+    direction = -1;
+    playTick('left');
+    totalReps++;
+    repCount++;
+    cycleCount.textContent = totalReps;
+
+    if (repCount >= repsPerSet) {
+      finishSet();
+      return;
+    }
+  } else if (dotPos <= 0) {
+    dotPos = 0;
+    direction = 1;
+    playTick('right');
+  }
+
+  updateDot(dotPos);
+  rafId = requestAnimationFrame(tick);
+}
+
+function finishSet() {
+  const pip = document.getElementById('pip-' + currentSet);
+  if (pip) pip.classList.remove('active');
+  if (pip) pip.classList.add('done');
+
+  currentSet++;
+  repCount = 0;
+
+  if (currentSet >= sets) {
+    stopSession(true);
+    return;
+  }
+
+  // kurze Pause zwischen Sets (1.5 s)
+  dotPos     = 0.5;
+  direction  = 1;
+  updateDot(dotPos);
+
+  const nextPip = document.getElementById('pip-' + currentSet);
+  if (nextPip) nextPip.classList.add('active');
+
+  lastTime = null;
+  setTimeout(() => {
+    if (running) rafId = requestAnimationFrame(tick);
+  }, 1500);
+}
+
+// ── START / STOP ──
+function startSession() {
+  running      = true;
+  currentSet   = 0;
+  repCount     = 0;
+  totalReps    = 0;
+  dotPos       = 0;
+  direction    = 1;
+  lastTime     = null;
+
+  cycleCount.textContent = '0';
+  document.querySelectorAll('.set-pip').forEach(p => {
+    p.classList.remove('done','active');
+  });
+  const firstPip = document.getElementById('pip-0');
+  if (firstPip) firstPip.classList.add('active');
+
+  document.body.classList.add('running');
+  statusLabel.textContent = 'LÄUFT';
+  statusLabel.classList.add('active');
+  mainBtn.textContent = 'Session stoppen';
+
+  rafId = requestAnimationFrame(tick);
+}
+
+function stopSession(completed = false) {
+  running = false;
+  cancelAnimationFrame(rafId);
+
+  document.body.classList.remove('running');
+  statusLabel.textContent = completed ? 'ABGESCHLOSSEN' : 'GESTOPPT';
+  statusLabel.classList.toggle('active', completed);
+  mainBtn.textContent = 'Session starten';
+
+  dotPos = 0.5;
+  updateDot(dotPos);
+
+  if (completed) {
+    document.querySelectorAll('.set-pip').forEach(p => {
+      p.classList.remove('active');
+      p.classList.add('done');
+    });
+  }
+}
+
+mainBtn.addEventListener('click', () => {
+  if (running) stopSession(false);
+  else startSession();
+});
+
+// Initiale Dot-Position
+updateDot(0.5);
+</script>
+</body>
+</html>

@@ -5,635 +5,974 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EMDR Therapie</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@300;400&display=swap');
 
-  :root {
-    --bg: #0a0e14;
-    --surface: #111620;
-    --border: #1e2736;
-    --text: #c8d4e8;
-    --text-dim: #4a5a72;
-    --accent: #4a9eff;
-    --accent-glow: rgba(74, 158, 255, 0.25);
-    --dot-color: #4a9eff;
-    --dot-glow: rgba(74, 158, 255, 0.6);
-    --success: #3dd68c;
-    --track-h: 4px;
-  }
+:root {
+  --bg:           #080c12;
+  --surface:      #0e1520;
+  --surface2:     #141e2e;
+  --border:       #1c2840;
+  --border2:      #263550;
+  --text:         #c0d0e8;
+  --text-dim:     #445570;
+  --text-mid:     #7a90b0;
+  --accent:       #3d8ef0;
+  --accent-soft:  rgba(61,142,240,0.15);
+  --accent-glow:  rgba(61,142,240,0.5);
+  --green:        #2ec882;
+  --dot:          #3d8ef0;
+  --dot-glow:     rgba(61,142,240,0.55);
+}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin:0; padding:0; box-sizing:border-box; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 300;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  overflow: hidden;
+}
 
-  /* ── HEADER ── */
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 28px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    flex-shrink: 0;
-  }
-  .logo {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    font-weight: 300;
-    letter-spacing: 0.15em;
-    color: var(--accent);
-    text-transform: uppercase;
-  }
-  .session-status {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--text-dim);
-    letter-spacing: 0.1em;
-  }
-  .session-status.active { color: var(--success); }
+/* ═══════════════════════════════
+   SCREENS
+═══════════════════════════════ */
+.screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.4s, transform 0.4s;
+}
+.screen.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.97);
+}
 
-  /* ── MAIN STAGE ── */
-  main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    padding: 20px;
-    gap: 32px;
-  }
+/* ═══════════════════════════════
+   SETUP SCREEN
+═══════════════════════════════ */
+#setup {
+  overflow-y: auto;
+  padding: 0 0 40px;
+}
 
-  /* track line */
-  .track-container {
-    width: min(820px, 92vw);
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-  .track {
-    width: 100%;
-    height: var(--track-h);
-    background: var(--border);
-    border-radius: 2px;
-    position: relative;
-    overflow: visible;
-  }
-  .track-glow {
-    position: absolute;
-    inset: 0;
-    border-radius: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
-    opacity: 0;
-    transition: opacity 0.4s;
-  }
-  body.running .track-glow { opacity: 1; }
+.setup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.logo {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+.version {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
 
-  /* dot */
-  .dot-wrapper {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
-  .dot {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: var(--dot-color);
-    box-shadow: 0 0 0 0 var(--dot-glow);
-    transition: background 0.3s;
-  }
-  body.running .dot {
-    animation: pulse 1s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 8px 2px var(--dot-glow); }
-    50%       { box-shadow: 0 0 24px 8px var(--dot-glow); }
-  }
+.setup-body {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 36px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
 
-  /* counter */
-  .counter-display {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    color: var(--text-dim);
-    letter-spacing: 0.12em;
-    min-width: 80px;
-    text-align: center;
-  }
-  .counter-num {
-    font-size: 28px;
-    color: var(--text);
-    display: block;
-    line-height: 1;
-    margin-bottom: 2px;
-  }
+/* Card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.card-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
 
-  /* ── CONTROLS ── */
-  .controls {
-    width: min(820px, 92vw);
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 16px;
-    align-items: end;
-  }
+/* Setting row */
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.setting-info {
+  flex: 1;
+}
+.setting-label {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 400;
+  margin-bottom: 2px;
+}
+.setting-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.05em;
+}
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
 
-  .control-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .control-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    color: var(--text-dim);
-    text-transform: uppercase;
-  }
+/* Slider */
+input[type=range] {
+  -webkit-appearance: none;
+  width: 140px;
+  height: 3px;
+  background: var(--border2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+.val-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 4px 10px;
+  min-width: 58px;
+  text-align: center;
+}
 
-  /* slider */
-  .slider-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  input[type=range] {
-    -webkit-appearance: none;
-    flex: 1;
-    height: 3px;
-    background: var(--border);
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-    box-shadow: 0 0 8px var(--accent-glow);
-  }
-  .slider-val {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    color: var(--text);
-    min-width: 30px;
-    text-align: right;
-  }
+/* Stepper */
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.step-btn {
+  background: var(--surface2);
+  border: none;
+  color: var(--text);
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  font-weight: 300;
+}
+.step-btn:hover { background: #1e2e48; }
+.step-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 14px;
+  color: var(--text);
+  min-width: 44px;
+  text-align: center;
+  background: var(--surface);
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid var(--border2);
+  border-right: 1px solid var(--border2);
+}
 
-  /* color picker row */
-  .color-row {
-    display: flex;
-    gap: 8px;
-  }
-  .color-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: transform 0.15s, border-color 0.15s;
-  }
-  .color-btn:hover { transform: scale(1.15); }
-  .color-btn.active { border-color: white; }
+/* Color picker */
+.color-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.color-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s;
+  position: relative;
+}
+.color-btn:hover { transform: scale(1.12); }
+.color-btn.active {
+  border-color: white;
+  box-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
 
-  /* set counter row */
-  .set-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .set-btn {
-    background: var(--border);
-    border: none;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
-    width: 28px;
-    height: 28px;
-    border-radius: 4px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.15s;
-  }
-  .set-btn:hover { background: #2a3548; }
-  .set-val {
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
-    color: var(--text);
-    min-width: 24px;
-    text-align: center;
-  }
+/* Toggle */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+.toggle-track {
+  width: 40px; height: 22px;
+  border-radius: 11px;
+  background: var(--border2);
+  position: relative;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle-track.on { background: var(--accent); }
+.toggle-thumb {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: white;
+  transition: left 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.toggle-track.on .toggle-thumb { left: 21px; }
 
-  /* ── MAIN BUTTON ── */
-  .btn-main {
-    width: min(820px, 92vw);
-    padding: 16px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 400;
-    letter-spacing: 0.08em;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s, color 0.2s;
-    text-transform: uppercase;
-  }
-  .btn-main:hover {
-    background: #182030;
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  body.running .btn-main {
-    border-color: #c04040;
-    color: #e05050;
-  }
-  body.running .btn-main:hover { background: #1a0f0f; }
+/* Preview */
+.preview-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 60px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+.preview-track {
+  width: 100%;
+  height: 2px;
+  background: var(--border);
+  position: relative;
+}
+.preview-dot {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--dot);
+  box-shadow: 0 0 12px var(--dot-glow);
+  animation: previewMove 2s ease-in-out infinite;
+}
+@keyframes previewMove {
+  0%   { left: 5%; }
+  50%  { left: 95%; }
+  100% { left: 5%; }
+}
 
-  /* ── SET PROGRESS ── */
-  .set-progress {
-    width: min(820px, 92vw);
-    display: flex;
-    gap: 6px;
-  }
-  .set-pip {
-    flex: 1;
-    height: 3px;
-    border-radius: 2px;
-    background: var(--border);
-    transition: background 0.3s;
-  }
-  .set-pip.done { background: var(--success); }
-  .set-pip.active { background: var(--accent); }
+/* Start button */
+.btn-start {
+  width: 100%;
+  padding: 18px;
+  background: var(--accent);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 4px 24px rgba(61,142,240,0.35);
+}
+.btn-start:hover {
+  background: #5aa0f5;
+  box-shadow: 0 6px 32px rgba(61,142,240,0.5);
+  transform: translateY(-1px);
+}
+.btn-start:active { transform: translateY(0); }
 
-  /* ── SOUND TOGGLE ── */
-  .sound-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    user-select: none;
-  }
-  .toggle-track {
-    width: 34px; height: 18px;
-    border-radius: 9px;
-    background: var(--border);
-    position: relative;
-    transition: background 0.2s;
-    flex-shrink: 0;
-  }
-  .toggle-track.on { background: var(--accent); }
-  .toggle-thumb {
-    position: absolute;
-    top: 2px; left: 2px;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: white;
-    transition: left 0.2s;
-  }
-  .toggle-track.on .toggle-thumb { left: 18px; }
-  .toggle-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    color: var(--text-dim);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
+/* summary row */
+.summary {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.summary-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 18px;
+  text-align: center;
+}
+.summary-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 22px;
+  color: var(--accent);
+  display: block;
+  line-height: 1;
+}
+.summary-lbl {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 4px;
+  display: block;
+}
 
-  /* ── FOOTER ── */
-  footer {
-    padding: 12px 28px;
-    border-top: 1px solid var(--border);
-    background: var(--surface);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-  }
-  .footer-note {
-    font-size: 11px;
-    color: var(--text-dim);
-    font-family: 'DM Mono', monospace;
-    letter-spacing: 0.08em;
-  }
-  .vr-badge {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    color: var(--accent);
-    border: 1px solid var(--accent);
-    padding: 3px 8px;
-    border-radius: 3px;
-    text-transform: uppercase;
-    opacity: 0.7;
-  }
+/* ═══════════════════════════════
+   THERAPY SCREEN
+═══════════════════════════════ */
+#therapy {
+  background: #000;
+  cursor: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.therapy-track {
+  width: 90vw;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  position: relative;
+}
+
+.therapy-dot {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--dot);
+  box-shadow: 0 0 30px 8px var(--dot-glow);
+  transition: background 0.3s, box-shadow 0.3s;
+  width: 28px;
+  height: 28px;
+}
+
+/* HUD — minimal, oben rechts, verschwindet nach 3s */
+.therapy-hud {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  opacity: 1;
+  transition: opacity 1s;
+  pointer-events: none;
+}
+.therapy-hud.fade { opacity: 0; }
+
+.hud-line {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 0.1em;
+}
+
+/* Set progress bar — unten */
+.therapy-progress {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  opacity: 1;
+  transition: opacity 1s;
+}
+.therapy-progress.fade { opacity: 0; }
+.t-pip {
+  width: 28px;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.1);
+  transition: background 0.4s;
+}
+.t-pip.done    { background: var(--green); }
+.t-pip.active  { background: var(--accent); }
+
+/* Stop button — erscheint bei Hover/Tap */
+.therapy-stop {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.3);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  padding: 8px 16px;
+  cursor: pointer;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+#therapy:hover .therapy-stop { opacity: 1; }
+
+/* Pause banner */
+.pause-banner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+}
+.pause-banner.show { opacity: 1; }
+.pause-banner h2 {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  font-weight: 300;
+}
+.pause-number {
+  font-family: 'DM Mono', monospace;
+  font-size: 64px;
+  color: rgba(255,255,255,0.15);
+  font-weight: 300;
+  line-height: 1;
+  margin-top: 8px;
+}
+
+/* Done banner */
+.done-banner {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s;
+}
+.done-banner.show {
+  opacity: 1;
+  pointer-events: all;
+}
+.done-banner h2 {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  color: var(--green);
+  text-transform: uppercase;
+  font-weight: 300;
+}
+.done-banner .done-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 72px;
+  color: rgba(255,255,255,0.12);
+  font-weight: 300;
+  line-height: 1;
+}
+.done-banner p {
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.1em;
+}
+.btn-back {
+  margin-top: 12px;
+  padding: 14px 36px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.5);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-back:hover {
+  border-color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.8);
+}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">EMDR · Stimulus</div>
-  <div class="session-status" id="statusLabel">BEREIT</div>
-</header>
+<!-- ══════════════════════════════════
+     SETUP SCREEN
+══════════════════════════════════ -->
+<div class="screen" id="setup">
+  <header class="setup-header">
+    <div class="logo">EMDR · Therapie</div>
+    <div class="version">v0.2</div>
+  </header>
 
-<main>
+  <div class="setup-body">
 
-  <!-- Set-Progress-Pips (werden dynamisch befüllt) -->
-  <div class="set-progress" id="setPips"></div>
-
-  <!-- Track + Dot -->
-  <div class="track-container">
-    <div class="track">
-      <div class="track-glow"></div>
-      <div class="dot-wrapper" id="dotWrapper">
-        <div class="dot" id="dot"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Zähler -->
-  <div class="counter-display">
-    <span class="counter-num" id="cycleCount">0</span>
-    <span>Durchläufe</span>
-  </div>
-
-  <!-- Steuerung -->
-  <div class="controls">
-
-    <!-- Geschwindigkeit -->
-    <div class="control-group">
-      <span class="control-label">Geschwindigkeit</span>
-      <div class="slider-row">
-        <input type="range" id="speedSlider" min="0.5" max="4" step="0.1" value="1.2">
-        <span class="slider-val" id="speedVal">1.2 s</span>
+    <!-- Vorschau -->
+    <div class="card">
+      <div class="card-title">Vorschau</div>
+      <div class="preview-box">
+        <div class="preview-track">
+          <div class="preview-dot" id="previewDot"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Farbe -->
-    <div class="control-group">
-      <span class="control-label">Stimulus-Farbe</span>
-      <div class="color-row" id="colorRow">
-        <div class="color-btn active" data-color="#4a9eff" style="background:#4a9eff"></div>
-        <div class="color-btn" data-color="#3dd68c" style="background:#3dd68c"></div>
-        <div class="color-btn" data-color="#f0c040" style="background:#f0c040"></div>
-        <div class="color-btn" data-color="#e05050" style="background:#e05050"></div>
-        <div class="color-btn" data-color="#cc88ff" style="background:#cc88ff"></div>
-        <div class="color-btn" data-color="#ffffff" style="background:#ffffff"></div>
+    <!-- Bewegung -->
+    <div class="card">
+      <div class="card-title">Bewegung</div>
+
+      <div class="setting">
+        <div class="setting-info">
+          <div class="setting-label">Geschwindigkeit</div>
+          <div class="setting-desc">Sekunden pro Durchlauf</div>
+        </div>
+        <div class="setting-control">
+          <input type="range" id="speedSlider" min="0.4" max="4" step="0.1" value="1.2">
+          <div class="val-badge" id="speedVal">1.2 s</div>
+        </div>
+      </div>
+
+      <div class="setting">
+        <div class="setting-info">
+          <div class="setting-label">Wiederholungen pro Set</div>
+          <div class="setting-desc">Hin- und Rückbewegungen</div>
+        </div>
+        <div class="setting-control">
+          <div class="stepper">
+            <button class="step-btn" id="repMinus">−</button>
+            <div class="step-val" id="repVal">24</div>
+            <button class="step-btn" id="repPlus">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="setting">
+        <div class="setting-info">
+          <div class="setting-label">Anzahl Sets</div>
+          <div class="setting-desc">Pause zwischen Sets: 2 Sek.</div>
+        </div>
+        <div class="setting-control">
+          <div class="stepper">
+            <button class="step-btn" id="setMinus">−</button>
+            <div class="step-val" id="setVal">3</div>
+            <button class="step-btn" id="setPlus">+</button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Sets -->
-    <div class="control-group">
-      <span class="control-label">Sets</span>
-      <div class="set-row">
-        <button class="set-btn" id="setMinus">−</button>
-        <span class="set-val" id="setVal">3</span>
-        <button class="set-btn" id="setPlus">+</button>
-        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-left:4px;">× 24</span>
+    <!-- Stimulus -->
+    <div class="card">
+      <div class="card-title">Stimulus</div>
+
+      <div class="setting">
+        <div class="setting-info">
+          <div class="setting-label">Punktgröße</div>
+          <div class="setting-desc">Durchmesser in Pixel</div>
+        </div>
+        <div class="setting-control">
+          <input type="range" id="sizeSlider" min="12" max="60" step="2" value="28">
+          <div class="val-badge" id="sizeVal">28 px</div>
+        </div>
+      </div>
+
+      <div class="setting">
+        <div class="setting-info">
+          <div class="setting-label">Farbe</div>
+        </div>
+        <div class="setting-control">
+          <div class="color-grid" id="colorGrid">
+            <div class="color-btn active" data-color="#3d8ef0" data-glow="rgba(61,142,240,0.55)"  style="background:#3d8ef0"></div>
+            <div class="color-btn"        data-color="#2ec882" data-glow="rgba(46,200,130,0.55)"  style="background:#2ec882"></div>
+            <div class="color-btn"        data-color="#f0d030" data-glow="rgba(240,208,48,0.55)"  style="background:#f0d030"></div>
+            <div class="color-btn"        data-color="#e05050" data-glow="rgba(224,80,80,0.55)"   style="background:#e05050"></div>
+            <div class="color-btn"        data-color="#cc88ff" data-glow="rgba(204,136,255,0.55)" style="background:#cc88ff"></div>
+            <div class="color-btn"        data-color="#ffffff" data-glow="rgba(255,255,255,0.4)"  style="background:#ffffff"></div>
+          </div>
+        </div>
       </div>
     </div>
 
-  </div>
-
-  <!-- Sound Toggle -->
-  <div class="sound-toggle" id="soundToggle">
-    <div class="toggle-track" id="toggleTrack">
-      <div class="toggle-thumb"></div>
+    <!-- Sound -->
+    <div class="card">
+      <div class="card-title">Sound</div>
+      <div class="setting">
+        <div class="setting-info">
+          <div class="setting-label">Bilateraler Ton</div>
+          <div class="setting-desc">Klick links/rechts im Kopfhörer</div>
+        </div>
+        <div class="setting-control">
+          <div class="toggle" id="soundToggle">
+            <div class="toggle-track" id="toggleTrack">
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <span class="toggle-label">Bilateraler Sound</span>
+
+    <!-- Zusammenfassung + Start -->
+    <div class="card">
+      <div class="card-title">Sitzungsübersicht</div>
+      <div class="summary">
+        <div class="summary-item">
+          <span class="summary-num" id="sumSets">3</span>
+          <span class="summary-lbl">Sets</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-num" id="sumReps">24</span>
+          <span class="summary-lbl">Wdh./Set</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-num" id="sumTotal">72</span>
+          <span class="summary-lbl">Gesamt</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-num" id="sumTime">~3 min</span>
+          <span class="summary-lbl">Dauer ca.</span>
+        </div>
+      </div>
+      <button class="btn-start" id="btnStart">Therapie starten →</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════
+     THERAPY SCREEN
+══════════════════════════════════ -->
+<div class="screen hidden" id="therapy">
+
+  <!-- HUD -->
+  <div class="therapy-hud" id="hud">
+    <div class="hud-line" id="hudSet">Set 1 / 3</div>
+    <div class="hud-line" id="hudRep">0 Durchläufe</div>
   </div>
 
-  <!-- Start/Stop -->
-  <button class="btn-main" id="mainBtn">Session starten</button>
+  <!-- Dot Track -->
+  <div class="therapy-track">
+    <div class="therapy-dot" id="therapyDot"></div>
+  </div>
 
-</main>
+  <!-- Set-Pips -->
+  <div class="therapy-progress" id="therapyPips"></div>
 
-<footer>
-  <span class="footer-note">Nur zur Verwendung durch ausgebildete Therapeuten</span>
-  <span class="vr-badge">WebXR ready</span>
-</footer>
+  <!-- Pause zwischen Sets -->
+  <div class="pause-banner" id="pauseBanner">
+    <h2>Nächstes Set</h2>
+    <div class="pause-number" id="pauseNum">2</div>
+  </div>
+
+  <!-- Fertig -->
+  <div class="done-banner" id="doneBanner">
+    <h2>Sitzung abgeschlossen</h2>
+    <div class="done-num" id="doneTotal">72</div>
+    <p>Durchläufe gesamt</p>
+    <button class="btn-back" id="btnBack">← Zurück zum Setup</button>
+  </div>
+
+  <!-- Stop -->
+  <button class="therapy-stop" id="btnStop">■ Stop</button>
+
+</div>
+
 
 <script>
 // ── STATE ──
-let running   = false;
-let speed     = 1.2;      // Sekunden pro Durchlauf
-let sets      = 3;
-let repsPerSet= 24;
-let currentSet= 0;
-let repCount  = 0;
-let totalReps = 0;
-let direction = 1;        // 1 = rechts, -1 = links
-let dotPos    = 0;        // 0..1
-let lastTime  = null;
-let rafId     = null;
-let soundOn   = false;
-let audioCtx  = null;
+let cfg = { speed:1.2, reps:24, sets:3, size:28, color:'#3d8ef0', glow:'rgba(61,142,240,0.55)', sound:false };
+let running=false, pausing=false;
+let curSet=0, curRep=0, totalReps=0;
+let dotPos=0, dir=1, lastTs=null, rafId=null;
+let audioCtx=null, hudTimer=null;
 
 // ── ELEMENTS ──
-const dotWrapper  = document.getElementById('dotWrapper');
-const cycleCount  = document.getElementById('cycleCount');
+const setupScreen   = document.getElementById('setup');
+const therapyScreen = document.getElementById('therapy');
+const therapyDot    = document.getElementById('therapyDot');
+const therapyPips   = document.getElementById('therapyPips');
+const hud           = document.getElementById('hud');
+const hudSet        = document.getElementById('hudSet');
+const hudRep        = document.getElementById('hudRep');
+const pauseBanner   = document.getElementById('pauseBanner');
+const pauseNum      = document.getElementById('pauseNum');
+const doneBanner    = document.getElementById('doneBanner');
+const doneTotal     = document.getElementById('doneTotal');
+const btnStop       = document.getElementById('btnStop');
+const btnBack       = document.getElementById('btnBack');
+
+// ── SETUP CONTROLS ──
 const speedSlider = document.getElementById('speedSlider');
 const speedVal    = document.getElementById('speedVal');
-const setValEl    = document.getElementById('setVal');
-const mainBtn     = document.getElementById('mainBtn');
-const statusLabel = document.getElementById('statusLabel');
-const setPips     = document.getElementById('setPips');
+const sizeSlider  = document.getElementById('sizeSlider');
+const sizeVal     = document.getElementById('sizeVal');
+const repVal      = document.getElementById('repVal');
+const setVal      = document.getElementById('setVal');
 const toggleTrack = document.getElementById('toggleTrack');
-const dot         = document.getElementById('dot');
+const previewDot  = document.getElementById('previewDot');
 
-// ── INIT PIPS ──
-function buildPips() {
-  setPips.innerHTML = '';
-  for (let i = 0; i < sets; i++) {
-    const pip = document.createElement('div');
-    pip.className = 'set-pip';
-    pip.id = 'pip-' + i;
-    setPips.appendChild(pip);
-  }
-}
-buildPips();
-
-// ── SPEED SLIDER ──
 speedSlider.addEventListener('input', () => {
-  speed = parseFloat(speedSlider.value);
-  speedVal.textContent = speed.toFixed(1) + ' s';
+  cfg.speed = parseFloat(speedSlider.value);
+  speedVal.textContent = cfg.speed.toFixed(1) + ' s';
+  updatePreview();
+  updateSummary();
 });
 
-// ── SETS ──
-document.getElementById('setMinus').addEventListener('click', () => {
-  if (sets > 1) { sets--; setValEl.textContent = sets; buildPips(); }
-});
-document.getElementById('setPlus').addEventListener('click', () => {
-  if (sets < 10) { sets++; setValEl.textContent = sets; buildPips(); }
+sizeSlider.addEventListener('input', () => {
+  cfg.size = parseInt(sizeSlider.value);
+  sizeVal.textContent = cfg.size + ' px';
+  updatePreview();
 });
 
-// ── COLOR ──
-document.getElementById('colorRow').addEventListener('click', e => {
+function stepper(minusId, plusId, valId, key, min, max, step=1) {
+  document.getElementById(minusId).addEventListener('click', () => {
+    if (cfg[key] - step >= min) { cfg[key] -= step; document.getElementById(valId).textContent = cfg[key]; updateSummary(); }
+  });
+  document.getElementById(plusId).addEventListener('click', () => {
+    if (cfg[key] + step <= max) { cfg[key] += step; document.getElementById(valId).textContent = cfg[key]; updateSummary(); }
+  });
+}
+stepper('repMinus','repPlus','repVal','reps', 4, 80, 4);
+stepper('setMinus','setPlus','setVal','sets', 1, 10);
+
+document.getElementById('colorGrid').addEventListener('click', e => {
   const btn = e.target.closest('.color-btn');
   if (!btn) return;
   document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const c = btn.dataset.color;
-  document.documentElement.style.setProperty('--dot-color', c);
-  // glow aus Farbe ableiten
-  document.documentElement.style.setProperty('--dot-glow', c + '99');
-  document.documentElement.style.setProperty('--accent-glow', c + '33');
+  cfg.color = btn.dataset.color;
+  cfg.glow  = btn.dataset.glow;
+  applyDotColor();
 });
 
-// ── SOUND TOGGLE ──
 document.getElementById('soundToggle').addEventListener('click', () => {
-  soundOn = !soundOn;
-  toggleTrack.classList.toggle('on', soundOn);
-  if (soundOn && !audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
+  cfg.sound = !cfg.sound;
+  toggleTrack.classList.toggle('on', cfg.sound);
+  if (cfg.sound && !audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 });
 
+function applyDotColor() {
+  previewDot.style.background = cfg.color;
+  previewDot.style.boxShadow  = `0 0 16px 4px ${cfg.glow}`;
+  therapyDot.style.background = cfg.color;
+  therapyDot.style.boxShadow  = `0 0 30px 8px ${cfg.glow}`;
+}
+
+function updatePreview() {
+  previewDot.style.animationDuration = (cfg.speed * 2) + 's';
+  previewDot.style.width  = (cfg.size * 0.65) + 'px';
+  previewDot.style.height = (cfg.size * 0.65) + 'px';
+}
+
+function updateSummary() {
+  const total = cfg.sets * cfg.reps;
+  const secs  = total * cfg.speed;
+  const mins  = Math.round(secs / 60);
+  document.getElementById('sumSets').textContent  = cfg.sets;
+  document.getElementById('sumReps').textContent  = cfg.reps;
+  document.getElementById('sumTotal').textContent = total;
+  document.getElementById('sumTime').textContent  = '~' + (mins < 1 ? '<1' : mins) + ' min';
+}
+
+applyDotColor();
+updatePreview();
+updateSummary();
+
+// ── START ──
+document.getElementById('btnStart').addEventListener('click', startTherapy);
+
+function startTherapy() {
+  // Fullscreen
+  if (therapyScreen.requestFullscreen) therapyScreen.requestFullscreen();
+  else if (therapyScreen.webkitRequestFullscreen) therapyScreen.webkitRequestFullscreen();
+
+  setupScreen.classList.add('hidden');
+  therapyScreen.classList.remove('hidden');
+
+  // Apply size
+  therapyDot.style.width  = cfg.size + 'px';
+  therapyDot.style.height = cfg.size + 'px';
+
+  // Build pips
+  therapyPips.innerHTML = '';
+  for (let i=0; i<cfg.sets; i++) {
+    const p = document.createElement('div');
+    p.className = 't-pip';
+    p.id = 'tp-' + i;
+    therapyPips.appendChild(p);
+  }
+
+  // Init
+  curSet=0; curRep=0; totalReps=0;
+  dotPos=0; dir=1; lastTs=null;
+  running=true; pausing=false;
+  doneBanner.classList.remove('show');
+  pauseBanner.classList.remove('show');
+
+  document.getElementById('tp-0').classList.add('active');
+  updateHUD();
+  showHUDThenFade();
+
+  rafId = requestAnimationFrame(tick);
+}
+
+// ── TICK ──
+function tick(ts) {
+  if (!running || pausing) return;
+  if (!lastTs) lastTs = ts;
+  const dt = (ts - lastTs) / 1000;
+  lastTs = ts;
+
+  dotPos += dir * (dt / cfg.speed);
+
+  if (dotPos >= 1) {
+    dotPos = 1; dir = -1;
+    playTick('left');
+    totalReps++; curRep++;
+    updateHUD();
+    if (curRep >= cfg.reps) { finishSet(); return; }
+  } else if (dotPos <= 0) {
+    dotPos = 0; dir = 1;
+    playTick('right');
+  }
+
+  moveDot();
+  rafId = requestAnimationFrame(tick);
+}
+
+function moveDot() {
+  const trackW = therapyDot.parentElement.clientWidth;
+  therapyDot.style.left = (dotPos * trackW) + 'px';
+}
+
+// ── SET DONE ──
+function finishSet() {
+  const pip = document.getElementById('tp-' + curSet);
+  if (pip) { pip.classList.remove('active'); pip.classList.add('done'); }
+  curSet++;
+
+  if (curSet >= cfg.sets) {
+    endTherapy(); return;
+  }
+
+  // Pause
+  pausing = true;
+  curRep  = 0;
+  dotPos  = 0.5;
+  dir     = 1;
+  moveDot();
+  lastTs  = null;
+
+  let countdown = 2;
+  pauseNum.textContent = countdown;
+  pauseBanner.classList.add('show');
+
+  const interval = setInterval(() => {
+    countdown--;
+    pauseNum.textContent = countdown;
+    if (countdown <= 0) {
+      clearInterval(interval);
+      pauseBanner.classList.remove('show');
+      pausing = false;
+      const nextPip = document.getElementById('tp-' + curSet);
+      if (nextPip) nextPip.classList.add('active');
+      updateHUD();
+      showHUDThenFade();
+      lastTs = null;
+      rafId = requestAnimationFrame(tick);
+    }
+  }, 1000);
+}
+
+// ── END ──
+function endTherapy() {
+  running = false;
+  doneTotal.textContent = totalReps;
+  doneBanner.classList.add('show');
+  document.querySelectorAll('.t-pip').forEach(p => { p.classList.remove('active'); p.classList.add('done'); });
+}
+
+// ── STOP ──
+btnStop.addEventListener('click', () => {
+  running = false;
+  cancelAnimationFrame(rafId);
+  backToSetup();
+});
+btnBack.addEventListener('click', backToSetup);
+
+function backToSetup() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  therapyScreen.classList.add('hidden');
+  setupScreen.classList.remove('hidden');
+}
+
+// ── HUD ──
+function updateHUD() {
+  hudSet.textContent = 'Set ' + (curSet+1) + ' / ' + cfg.sets;
+  hudRep.textContent = totalReps + ' Durchläufe';
+}
+
+function showHUDThenFade() {
+  hud.classList.remove('fade');
+  therapyPips.classList.remove('fade');
+  clearTimeout(hudTimer);
+  hudTimer = setTimeout(() => {
+    hud.classList.add('fade');
+    therapyPips.classList.add('fade');
+  }, 3000);
+}
+
+// ── SOUND ──
 function playTick(side) {
-  if (!soundOn || !audioCtx) return;
+  if (!cfg.sound || !audioCtx) return;
   const osc  = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   const pan  = audioCtx.createStereoPanner();
   pan.pan.value = side === 'left' ? -1 : 1;
-  osc.frequency.value = 440;
+  osc.frequency.value = 480;
   osc.type = 'sine';
-  gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-  osc.connect(gain);
-  gain.connect(pan);
-  pan.connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.12);
+  gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+  osc.connect(gain); gain.connect(pan); pan.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.1);
 }
-
-// ── ANIMATION ──
-function updateDot(progress) {
-  const trackW = dotWrapper.parentElement.clientWidth;
-  const x = progress * trackW;
-  dotWrapper.style.left = x + 'px';
-}
-
-function tick(ts) {
-  if (!lastTime) lastTime = ts;
-  const delta = (ts - lastTime) / 1000;
-  lastTime = ts;
-
-  dotPos += direction * (delta / speed);
-
-  if (dotPos >= 1) {
-    dotPos = 1;
-    direction = -1;
-    playTick('left');
-    totalReps++;
-    repCount++;
-    cycleCount.textContent = totalReps;
-
-    if (repCount >= repsPerSet) {
-      finishSet();
-      return;
-    }
-  } else if (dotPos <= 0) {
-    dotPos = 0;
-    direction = 1;
-    playTick('right');
-  }
-
-  updateDot(dotPos);
-  rafId = requestAnimationFrame(tick);
-}
-
-function finishSet() {
-  const pip = document.getElementById('pip-' + currentSet);
-  if (pip) pip.classList.remove('active');
-  if (pip) pip.classList.add('done');
-
-  currentSet++;
-  repCount = 0;
-
-  if (currentSet >= sets) {
-    stopSession(true);
-    return;
-  }
-
-  // kurze Pause zwischen Sets (1.5 s)
-  dotPos     = 0.5;
-  direction  = 1;
-  updateDot(dotPos);
-
-  const nextPip = document.getElementById('pip-' + currentSet);
-  if (nextPip) nextPip.classList.add('active');
-
-  lastTime = null;
-  setTimeout(() => {
-    if (running) rafId = requestAnimationFrame(tick);
-  }, 1500);
-}
-
-// ── START / STOP ──
-function startSession() {
-  running      = true;
-  currentSet   = 0;
-  repCount     = 0;
-  totalReps    = 0;
-  dotPos       = 0;
-  direction    = 1;
-  lastTime     = null;
-
-  cycleCount.textContent = '0';
-  document.querySelectorAll('.set-pip').forEach(p => {
-    p.classList.remove('done','active');
-  });
-  const firstPip = document.getElementById('pip-0');
-  if (firstPip) firstPip.classList.add('active');
-
-  document.body.classList.add('running');
-  statusLabel.textContent = 'LÄUFT';
-  statusLabel.classList.add('active');
-  mainBtn.textContent = 'Session stoppen';
-
-  rafId = requestAnimationFrame(tick);
-}
-
-function stopSession(completed = false) {
-  running = false;
-  cancelAnimationFrame(rafId);
-
-  document.body.classList.remove('running');
-  statusLabel.textContent = completed ? 'ABGESCHLOSSEN' : 'GESTOPPT';
-  statusLabel.classList.toggle('active', completed);
-  mainBtn.textContent = 'Session starten';
-
-  dotPos = 0.5;
-  updateDot(dotPos);
-
-  if (completed) {
-    document.querySelectorAll('.set-pip').forEach(p => {
-      p.classList.remove('active');
-      p.classList.add('done');
-    });
-  }
-}
-
-mainBtn.addEventListener('click', () => {
-  if (running) stopSession(false);
-  else startSession();
-});
-
-// Initiale Dot-Position
-updateDot(0.5);
 </script>
 </body>
 </html>
